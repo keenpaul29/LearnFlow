@@ -1,22 +1,31 @@
-import { NextResponse } from 'next/server'
-import type { NextRequest } from 'next/server'
+import { withAuth } from "next-auth/middleware";
+import { NextResponse } from "next/server";
 
-export function middleware(request: NextRequest) {
-  const token = request.cookies.get('token')?.value
-  const isAuthPage = request.nextUrl.pathname.startsWith('/login') || 
-                    request.nextUrl.pathname.startsWith('/signup')
-
-  if (!token && !isAuthPage) {
-    return NextResponse.redirect(new URL('/login', request.url))
+export default withAuth(
+  function middleware(req) {
+    const isAuthPage = req.nextUrl.pathname.startsWith('/login') || 
+                      req.nextUrl.pathname.startsWith('/signup');
+    
+    if (isAuthPage) {
+      return NextResponse.redirect(new URL('/dashboard', req.url));
+    }
+    return NextResponse.next();
+  },
+  {
+    callbacks: {
+      authorized: ({ token }) => !!token,
+    },
+    pages: {
+      signIn: '/login',
+    },
   }
+);
 
-  if (token && isAuthPage) {
-    return NextResponse.redirect(new URL('/dashboard', request.url))
-  }
-
-  return NextResponse.next()
-}
-
+// Protect all routes except public ones
 export const config = {
-  matcher: ['/dashboard/:path*', '/login', '/signup']
-}
+  matcher: [
+    '/dashboard/:path*',
+    '/login',
+    '/signup',
+  ],
+};

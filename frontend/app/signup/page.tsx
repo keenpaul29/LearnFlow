@@ -2,9 +2,18 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { motion } from 'framer-motion';
-import { useAuth } from '@/context/auth-context';
+import Image from 'next/image';
+import { signIn } from 'next-auth/react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { FcGoogle } from 'react-icons/fc';
+import { useRouter } from 'next/navigation';
 import { toast } from '@/components/ui/use-toast';
+import axios from 'axios';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 
 export default function SignupPage() {
   const [formData, setFormData] = useState({
@@ -14,7 +23,7 @@ export default function SignupPage() {
     confirmPassword: '',
   });
   const [isLoading, setIsLoading] = useState(false);
-  const { signup } = useAuth();
+  const router = useRouter();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -26,26 +35,49 @@ export default function SignupPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsLoading(true);
+
     if (formData.password !== formData.confirmPassword) {
       toast({
         title: "Error",
         description: "Passwords do not match",
         variant: "destructive",
       });
+      setIsLoading(false);
       return;
     }
 
-    setIsLoading(true);
     try {
-      await signup(formData.name, formData.email, formData.password);
-      toast({
-        title: "Success",
-        description: "Account created successfully!",
+      const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/auth/register`, {
+        name: formData.name,
+        email: formData.email,
+        password: formData.password,
       });
+
+      if (response.data.user) {
+        // After successful signup, sign in automatically
+        const result = await signIn('credentials', {
+          email: formData.email,
+          password: formData.password,
+          redirect: false,
+        });
+
+        if (result?.error) {
+          toast({
+            title: "Error",
+            description: "Failed to sign in after registration",
+            variant: "destructive",
+          });
+        } else {
+          router.push('/dashboard');
+        }
+      }
     } catch (error: any) {
+      console.error('Signup error:', error);
+      const message = error.response?.data?.message || "Failed to create account";
       toast({
         title: "Error",
-        description: error.message || "Failed to create account",
+        description: message,
         variant: "destructive",
       });
     } finally {
@@ -53,111 +85,125 @@ export default function SignupPage() {
     }
   };
 
+  const handleGoogleSignUp = () => {
+    signIn('google', {
+      callbackUrl: '/dashboard'
+    });
+  };
+
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center relative isolate px-6 pt-14 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="text-center"
-        >
-          <h2 className="text-4xl font-bold tracking-tight text-primary">
-            Join LearnFlow
-          </h2>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Start your learning journey today
-          </p>
-        </motion.div>
-        <motion.form
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-          className="mt-8 space-y-6"
-          onSubmit={handleSubmit}
-        >
-          <div className="rounded-md space-y-4">
-            <div>
-              <label htmlFor="name" className="sr-only">
-                Full Name
-              </label>
-              <input
-                id="name"
-                name="name"
-                type="text"
-                required
-                className="appearance-none rounded-md relative block w-full px-3 py-2 border bg-background text-foreground border-input placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                placeholder="Full Name"
-                value={formData.name}
-                onChange={handleChange}
-                disabled={isLoading}
-              />
+    <div className="min-h-screen bg-gradient-to-b from-background to-background/80 flex items-center justify-center p-4">
+      <div className="w-full max-w-md space-y-8 mx-4">
+        <div className="text-center space-y-6">
+          <div>
+            <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-gradient">
+              Create an account
+            </h1>
+            <p className="mt-2 text-sm sm:text-base text-muted-foreground">
+              Start your learning journey today
+            </p>
+          </div>
+        </div>
+
+        <div className="space-y-6">
+          <Button
+            onClick={handleGoogleSignUp}
+            className="w-full flex items-center justify-center gap-2 h-11"
+            variant="outline"
+            disabled={isLoading}
+          >
+            <FcGoogle className="h-5 w-5" />
+            <span className="hidden sm:inline">Sign up with Google</span>
+            <span className="sm:hidden">Google</span>
+          </Button>
+
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t" />
             </div>
-            <div>
-              <label htmlFor="email" className="sr-only">
-                Email address
-              </label>
-              <input
-                id="email"
-                name="email"
-                type="email"
-                required
-                className="appearance-none rounded-md relative block w-full px-3 py-2 border bg-background text-foreground border-input placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                placeholder="Email address"
-                value={formData.email}
-                onChange={handleChange}
-                disabled={isLoading}
-              />
-            </div>
-            <div>
-              <label htmlFor="password" className="sr-only">
-                Password
-              </label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                required
-                className="appearance-none rounded-md relative block w-full px-3 py-2 border bg-background text-foreground border-input placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                placeholder="Password"
-                value={formData.password}
-                onChange={handleChange}
-                disabled={isLoading}
-              />
-            </div>
-            <div>
-              <label htmlFor="confirmPassword" className="sr-only">
-                Confirm Password
-              </label>
-              <input
-                id="confirmPassword"
-                name="confirmPassword"
-                type="password"
-                required
-                className="appearance-none rounded-md relative block w-full px-3 py-2 border bg-background text-foreground border-input placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                placeholder="Confirm Password"
-                value={formData.confirmPassword}
-                onChange={handleChange}
-                disabled={isLoading}
-              />
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-background px-2 text-muted-foreground">
+                Or continue with email
+              </span>
             </div>
           </div>
 
-          <div>
-            <button
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="name">Name</Label>
+              <Input
+                id="name"
+                name="name"
+                type="text"
+                placeholder="Enter your name"
+                value={formData.name}
+                onChange={handleChange}
+                disabled={isLoading}
+                required
+                className="h-11"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                name="email"
+                type="email"
+                placeholder="Enter your email"
+                value={formData.email}
+                onChange={handleChange}
+                disabled={isLoading}
+                required
+                className="h-11"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="password">Password</Label>
+              <Input
+                id="password"
+                name="password"
+                type="password"
+                placeholder="Create a password"
+                value={formData.password}
+                onChange={handleChange}
+                disabled={isLoading}
+                required
+                className="h-11"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="confirmPassword">Confirm Password</Label>
+              <Input
+                id="confirmPassword"
+                name="confirmPassword"
+                type="password"
+                placeholder="Confirm your password"
+                value={formData.confirmPassword}
+                onChange={handleChange}
+                disabled={isLoading}
+                required
+                className="h-11"
+              />
+            </div>
+
+            <Button
               type="submit"
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-full bg-primary text-primary-foreground hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full h-11"
               disabled={isLoading}
             >
-              {isLoading ? 'Creating account...' : 'Create Account'}
-            </button>
-          </div>
-        </motion.form>
-        
-        <div className="text-sm text-center">
-          <Link href="/login" className="font-medium text-primary hover:text-primary/90">
-            Already have an account? Sign in
-          </Link>
+              {isLoading ? "Creating account..." : "Create account"}
+            </Button>
+          </form>
+
+          <p className="text-center text-sm text-muted-foreground">
+            Already have an account?{' '}
+            <Link
+              href="/login"
+              className="font-medium text-primary hover:underline"
+            >
+              Sign in
+            </Link>
+          </p>
         </div>
       </div>
     </div>

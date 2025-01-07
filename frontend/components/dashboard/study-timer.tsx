@@ -9,9 +9,9 @@ import { motion } from 'framer-motion';
 import { toast } from '@/components/ui/use-toast';
 
 export function StudyTimer() {
-  const [timeLeft, setTimeLeft] = useState(25 * 60); // 25 minutes in seconds
+  const [timeLeft, setTimeLeft] = useState(0); // Start at 0 seconds
   const [isRunning, setIsRunning] = useState(false);
-  const [selectedDuration, setSelectedDuration] = useState(25);
+  const [selectedDuration, setSelectedDuration] = useState(0); // Start at 0 minutes
 
   useEffect(() => {
     let interval: NodeJS.Timeout;

@@ -1,8 +1,11 @@
 import type { Metadata } from 'next'
 import { Inter as FontSans } from 'next/font/google'
 import { Outfit as FontHeading } from 'next/font/google'
+import { ThemeProvider } from "@/components/providers/theme-provider";
+import { SessionProvider } from "@/components/providers/session-provider";
+import { AuthProvider } from "@/context/auth-context";
+import { Toaster } from "@/components/providers/toaster";
 import './globals.css'
-import { Providers } from './providers'
 
 const fontSans = FontSans({
   subsets: ['latin'],
@@ -35,7 +38,19 @@ export default function RootLayout({
       <body
         className={`min-h-screen bg-background font-sans antialiased ${fontSans.variable} ${fontHeading.variable}`}
       >
-        <Providers>{children}</Providers>
+        <SessionProvider>
+          <AuthProvider>
+            <ThemeProvider
+              attribute="class"
+              defaultTheme="system"
+              enableSystem
+              disableTransitionOnChange
+            >
+              {children}
+              <Toaster />
+            </ThemeProvider>
+          </AuthProvider>
+        </SessionProvider>
       </body>
     </html>
   )

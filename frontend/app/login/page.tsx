@@ -4,180 +4,151 @@ import { useState } from 'react';
 import { signIn } from 'next-auth/react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { FcGoogle } from 'react-icons/fc';
+import { useRouter } from 'next/navigation';
+import { toast } from '@/components/ui/use-toast';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!email || !password) {
+      toast({
+        title: "Error",
+        description: "Please enter your email and password",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsLoading(true);
 
     try {
       const result = await signIn('credentials', {
         email,
         password,
-        redirect: true,
-        callbackUrl: '/dashboard'
+        redirect: false,
       });
-    } catch (error) {
+
+      if (result?.error) {
+        toast({
+          title: "Error",
+          description: result.error === "CredentialsSignin" 
+            ? "Invalid email or password" 
+            : result.error,
+          variant: "destructive",
+        });
+      } else {
+        router.push('/dashboard');
+      }
+    } catch (error: any) {
       console.error('Login error:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Something went wrong",
+        variant: "destructive",
+      });
     } finally {
       setIsLoading(false);
     }
   };
 
+  const handleGoogleSignIn = () => {
+    signIn('google', {
+      callbackUrl: '/dashboard'
+    });
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-background/80 flex items-center justify-center p-4">
-      <div className="w-full max-w-md space-y-8">
+      <div className="w-full max-w-md space-y-8 mx-4">
         <div className="text-center space-y-6">
-          <div className="relative w-24 h-24 mx-auto animate-float">
-            <Image
-              src="/logo.png"
-              alt="LearnFlow Logo"
-              fill
-              className="object-contain"
-              priority
-            />
-          </div>
           <div>
-            <h1 className="text-4xl font-bold tracking-tight text-gradient">
+            <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-gradient">
               Welcome back
             </h1>
-            <p className="mt-2 text-muted-foreground">
+            <p className="mt-2 text-sm sm:text-base text-muted-foreground">
               Sign in to continue your learning journey
             </p>
           </div>
         </div>
 
-        <div className="card p-6 space-y-6">
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium mb-2">
-                Email
-              </label>
-              <input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="input"
-                placeholder="Enter your email"
-                required
-              />
-            </div>
-
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium mb-2">
-                Password
-              </label>
-              <input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="input"
-                placeholder="Enter your password"
-                required
-              />
-            </div>
-
-            <div className="flex items-center justify-between">
-              <div className="flex items-center">
-                <input
-                  id="remember"
-                  type="checkbox"
-                  className="h-4 w-4 rounded border-input bg-background"
-                />
-                <label htmlFor="remember" className="ml-2 block text-sm">
-                  Remember me
-                </label>
-              </div>
-              <Link
-                href="/forgot-password"
-                className="text-sm text-primary hover:text-primary/90"
-              >
-                Forgot password?
-              </Link>
-            </div>
-
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="btn btn-primary w-full"
-            >
-              {isLoading ? (
-                <div className="flex items-center justify-center">
-                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" />
-                  Signing in...
-                </div>
-              ) : (
-                'Sign in'
-              )}
-            </button>
-          </form>
+        <div className="space-y-6">
+          <Button
+            onClick={handleGoogleSignIn}
+            className="w-full flex items-center justify-center gap-2 h-11"
+            variant="outline"
+            disabled={isLoading}
+          >
+            <FcGoogle className="h-5 w-5" />
+            <span className="hidden sm:inline">Continue with Google</span>
+            <span className="sm:hidden">Google</span>
+          </Button>
 
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t" />
+              <span className="w-full border-t" />
             </div>
             <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-card px-2 text-muted-foreground">
-                Or continue with
+              <span className="bg-background px-2 text-muted-foreground">
+                Or continue with email
               </span>
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <button
-              onClick={() => signIn('google')}
-              className="btn btn-outline flex items-center justify-center gap-2"
-            >
-              <Image
-                src="/google.svg"
-                alt="Google"
-                width={18}
-                height={18}
-                className="object-contain"
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="Enter your email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                disabled={isLoading}
+                required
+                className="h-11"
               />
-              Google
-            </button>
-            <button
-              onClick={() => signIn('github')}
-              className="btn btn-outline flex items-center justify-center gap-2"
-            >
-              <Image
-                src="/github.svg"
-                alt="GitHub"
-                width={18}
-                height={18}
-                className="object-contain"
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="password">Password</Label>
+              <Input
+                id="password"
+                type="password"
+                placeholder="Enter your password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                disabled={isLoading}
+                required
+                className="h-11"
               />
-              GitHub
-            </button>
-          </div>
+            </div>
 
-          <p className="text-center text-sm">
+            <Button
+              type="submit"
+              className="w-full h-11"
+              disabled={isLoading}
+            >
+              {isLoading ? "Signing in..." : "Sign in"}
+            </Button>
+          </form>
+
+          <p className="text-center text-sm text-muted-foreground">
             Don't have an account?{' '}
             <Link
-              href="/register"
-              className="text-primary hover:text-primary/90 font-semibold"
+              href="/signup"
+              className="font-medium text-primary hover:underline"
             >
               Sign up
             </Link>
           </p>
-        </div>
-
-        <div className="text-center text-xs text-muted-foreground">
-          By signing in, you agree to our{' '}
-          <Link href="/terms" className="hover:underline">
-            Terms of Service
-          </Link>{' '}
-          and{' '}
-          <Link href="/privacy" className="hover:underline">
-            Privacy Policy
-          </Link>
         </div>
       </div>
     </div>
