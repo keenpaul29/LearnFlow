@@ -2,12 +2,13 @@
 
 import { createContext, useContext, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useSession } from 'next-auth/react';
+import { useSession, signOut } from 'next-auth/react';
 import { User } from '@/types';
 
 interface AuthContextType {
   user: User | null;
   loading: boolean;
+  logout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -32,6 +33,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const value = {
     user,
     loading: status === 'loading',
+    logout: async () => {
+      await signOut();
+      setUser(null);
+    }
   };
 
   return (
