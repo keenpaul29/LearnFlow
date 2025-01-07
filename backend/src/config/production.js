@@ -10,7 +10,7 @@ module.exports = {
       process.env.FRONTEND_URL             // Flexible frontend URL from env
     ].filter(Boolean), // Remove falsy values
     credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
     allowedHeaders: ['Content-Type', 'Authorization'],
     exposedHeaders: ['Content-Range', 'X-Content-Range'],
     maxAge: 86400 // 24 hours in seconds
@@ -22,22 +22,5 @@ module.exports = {
   logging: {
     level: 'error',
     showStack: false
-  },
-  security: {
-    rateLimit: {
-      windowMs: 15 * 60 * 1000, // 15 minutes
-      max: 100 // limit each IP to 100 requests per windowMs
-    },
-    helmet: {
-      contentSecurityPolicy: {
-        directives: {
-          defaultSrc: ["'self'"],
-          styleSrc: ["'self'", "'unsafe-inline'"],
-          scriptSrc: ["'self'"],
-          imgSrc: ["'self'", 'data:', 'https:'],
-          connectSrc: ["'self'", 'https://api.openai.com']
-        }
-      }
-    }
   }
 };
