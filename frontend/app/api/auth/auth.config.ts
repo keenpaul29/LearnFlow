@@ -30,6 +30,15 @@ declare module "next-auth/jwt" {
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
+// Create an axios instance with default config
+const api = axios.create({
+  baseURL: API_URL,
+  timeout: 10000, // 10 seconds timeout
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
 export const authOptions: NextAuthOptions = {
   providers: [
     CredentialsProvider({
@@ -45,7 +54,7 @@ export const authOptions: NextAuthOptions = {
         }
 
         try {
-          const response = await axios.post(`${API_URL}/auth/login`, {
+          const response = await api.post('/auth/login', {
             email: credentials.email,
             password: credentials.password,
           });
@@ -61,10 +70,25 @@ export const authOptions: NextAuthOptions = {
             };
           }
 
-          throw new Error("Invalid email or password");
+          throw new Error("Invalid credentials");
         } catch (error: any) {
-          const message = error.response?.data?.message || "Invalid credentials";
-          throw new Error(message);
+          if (axios.isAxiosError(error)) {
+            if (error.code === 'ECONNABORTED') {
+              throw new Error("Connection timeout. Please try again.");
+            }
+            const status = error.response?.status;
+            if (status === 401) {
+              throw new Error("Invalid email or password");
+            }
+            if (status === 404) {
+              throw new Error("User not found");
+            }
+            if (status && status >= 500) {
+              throw new Error("Server error. Please try again later.");
+            }
+            throw new Error(error.response?.data?.message || "Authentication failed");
+          }
+          throw new Error("An unexpected error occurred");
         }
       },
     }),
@@ -92,6 +116,14 @@ export const authOptions: NextAuthOptions = {
       }
       return session;
     },
+  },
+  pages: {
+    signIn: '/login',
+    error: '/login',
+  },
+  session: {
+    strategy: 'jwt',
+    maxAge: 30 * 24 * 60 * 60, // 30 days
   },
   debug: process.env.NODE_ENV === "development",
 };
