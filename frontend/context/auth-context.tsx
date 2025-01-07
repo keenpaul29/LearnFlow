@@ -20,13 +20,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (status === 'authenticated' && session?.user) {
-      setUser({
+      const userData = {
         id: session.user.id as string,
         name: session.user.name as string,
         email: session.user.email as string,
-      });
+      };
+      setUser(userData);
+      if (session.user.accessToken) {
+        localStorage.setItem('accessToken', session.user.accessToken);
+      }
     } else if (status === 'unauthenticated') {
       setUser(null);
+      localStorage.removeItem('accessToken');
     }
   }, [session, status]);
 
@@ -36,6 +41,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     logout: async () => {
       await signOut();
       setUser(null);
+      localStorage.removeItem('accessToken');
     }
   };
 
