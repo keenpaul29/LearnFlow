@@ -1,43 +1,40 @@
-# LearnFlow - Smart Learning Task Manager
+# LearnFlow - AI-Powered Learning Assistant
 
-LearnFlow is a modern learning-focused todo app that helps you organize your learning journey effectively. Built with Next.js and FastAPI, it provides a seamless experience for managing your learning tasks, tracking progress, and staying motivated.
+LearnFlow is an intelligent learning platform that combines task management with AI-powered study assistance. Built with Next.js and Express.js, it helps students organize their studies, generate study materials, and get instant help with their questions.
 
 ## Features
 
-- 📚 Learning-focused task management
-- 📊 Progress tracking and analytics
-- 🎯 Smart task suggestions
-- 📅 Study schedule planning
-- 🔍 Resource organization
-- 🤝 Study group collaboration
-- 📱 Responsive design
-- 🌙 Dark/Light mode
+- AI Study Assistant with natural conversation
+- AI-powered content generation for notes, summaries, and quizzes
+- Smart task management for learning
+- Progress tracking and analytics
+- Personalized study recommendations
+- Dark/Light mode support
+- Fully responsive design
 
 ## Tech Stack
 
 ### Frontend
-- Next.js 14 (React)
+- Next.js 14
 - TypeScript
 - Tailwind CSS
 - Shadcn UI
-- React Query
 - Framer Motion
-- Zustand (State Management)
+- Google Gemini AI
 
 ### Backend
-- FastAPI
-- PostgreSQL
-- SQLAlchemy
-- Pydantic
+- Express.js
+- MongoDB
 - JWT Authentication
-- Alembic (Migrations)
+- Google AI/ML APIs
+- Rate Limiting & Security
 
 ## Getting Started
 
 ### Prerequisites
 - Node.js 18+
-- Python 3.8+
-- PostgreSQL
+- MongoDB
+- Google Gemini API Key
 
 ### Installation
 
@@ -51,34 +48,31 @@ cd learnflow
 ```bash
 cd frontend
 npm install
+cp .env.example .env.local  # Configure your environment variables
 npm run dev
 ```
 
 3. Set up the backend:
 ```bash
 cd backend
-python -m venv venv
-source venv/bin/activate  # On Windows: .\venv\Scripts\activate
-pip install -r requirements.txt
-uvicorn app.main:app --reload
-```
-
-4. Set up the database:
-```bash
-cd backend
-alembic upgrade head
+npm install
+cp .env.example .env  # Configure your environment variables
+npm run dev
 ```
 
 ## Environment Variables
 
-### Frontend (.env.local)
+### Frontend (.env)
 ```
 NEXT_PUBLIC_API_URL=http://localhost:8000
+GEMINI_API_KEY=your-gemini-api-key
 ```
 
 ### Backend (.env)
 ```
-DATABASE_URL=postgresql://user:password@localhost:5432/learnflow
+PORT=8000
+MONGODB_URI=your-mongodb-uri
+JWT_SECRET=your-jwt-secret
 SECRET_KEY=your-secret-key
 ```
 
@@ -87,29 +81,62 @@ SECRET_KEY=your-secret-key
 ```
 learnflow/
 ├── frontend/
-│   ├── app/
-│   ├── components/
-│   ├── lib/
-│   ├── public/
-│   └── styles/
+│   ├── app/              # Next.js app router
+│   ├── components/       # React components
+│   │   ├── ai/          # AI-related components
+│   │   └── ui/          # UI components
+│   ├── lib/             # Utility functions
+│   └── public/          # Static assets
 └── backend/
-    ├── app/
-    │   ├── api/
-    │   ├── core/
-    │   ├── models/
-    │   └── schemas/
-    ├── alembic/
-    └── tests/
+    ├── src/
+    │   ├── config/      # Configuration files
+    │   ├── routes/      # API routes
+    │   ├── models/      # Database models
+    │   └── middleware/  # Custom middleware
+    └── tests/           # Test files
 ```
+
+## Key Features
+
+### AI Study Assistant
+- Natural language conversations about any study topic
+- Instant answers to academic questions
+- Personalized learning recommendations
+
+### Content Generation
+- Generate study notes
+- Create summaries
+- Produce practice quizzes
+- Make flashcards
+
+### Task Management
+- Organize study tasks
+- Track learning progress
+- Set study reminders
+- Priority management
+
+## Deployment
+
+### Frontend
+- Deploy on Vercel
+- Configure environment variables
+- Set up production optimizations
+
+### Backend
+- Deploy on Render
+- Configure MongoDB Atlas
+- Set up security measures
 
 ## Contributing
 
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Acknowledgments
+
+- [Shadcn UI](https://ui.shadcn.com/) for the beautiful components
+- [Google Gemini](https://deepmind.google/technologies/gemini/) for AI capabilities
+- All contributors and supporters of this project
