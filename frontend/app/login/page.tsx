@@ -60,10 +60,23 @@ export default function LoginPage() {
     }
   };
 
-  const handleGoogleSignIn = () => {
-    signIn('google', {
-      callbackUrl: '/dashboard'
-    });
+  const handleGoogleSignIn = async () => {
+    try {
+      setIsLoading(true);
+      const result = await signIn('google', {
+        callbackUrl: '/dashboard',
+        redirect: true
+      });
+    } catch (error: any) {
+      console.error('Google sign-in error:', error);
+      toast({
+        title: "Error",
+        description: "Failed to sign in with Google",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
