@@ -7,13 +7,23 @@ const router = express.Router();
 
 // Initialize Firebase Admin (make sure to add firebase-admin to dependencies)
 if (!admin.apps.length) {
-  admin.initializeApp({
+  const firebaseConfig = {
     credential: admin.credential.cert({
       projectId: process.env.FIREBASE_PROJECT_ID,
       clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-      privateKey: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n')
+      privateKey: process.env.FIREBASE_PRIVATE_KEY 
+        ? process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n') 
+        : undefined
     })
-  });
+  };
+
+  try {
+    admin.initializeApp(firebaseConfig);
+  } catch (error) {
+    console.error('Firebase Admin initialization error:', error);
+    // Optionally, you can throw the error to prevent the app from starting
+    // throw error;
+  }
 }
 
 // Register

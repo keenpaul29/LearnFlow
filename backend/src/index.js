@@ -7,6 +7,7 @@ const setupSecurity = require('./middleware/security');
 const authRoutes = require('./routes/auth');
 const taskRoutes = require('./routes/tasks');
 const learningRoutes = require('./routes/learning');
+const auth = require('./middleware/auth');
 
 const app = express();
 
@@ -24,6 +25,14 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use('/auth', authRoutes);
 app.use('/tasks', taskRoutes);
 app.use('/learning', learningRoutes);
+
+// Add a test authentication route
+app.get('/auth/test', auth, (req, res) => {
+  res.json({
+    message: 'Authentication successful',
+    user: req.user
+  });
+});
 
 // MongoDB connection
 mongoose.connect(config.mongodb.uri, {
