@@ -17,6 +17,9 @@ const userSchema = new mongoose.Schema({
   password: {
     type: String,
     required: true
+  },
+  firebaseUid: {
+    type: String
   }
 }, {
   timestamps: true
