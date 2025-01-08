@@ -7,6 +7,8 @@ module.exports = {
     origin: [
       'https://learnflow.vercel.app',      // Add your Vercel domain
       'https://www.learnflow.vercel.app',   // Add www subdomain
+      'https://learnflow-nu.vercel.app',    // Add the specific Vercel deployment URL
+      'https://learnflow-prgc.onrender.com', // Add the Render domain
       process.env.FRONTEND_URL             // Flexible frontend URL from env
     ].filter(Boolean), // Remove falsy values
     credentials: true,
