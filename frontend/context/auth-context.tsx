@@ -2,47 +2,112 @@
 
 import { createContext, useContext, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useSession, signOut } from 'next-auth/react';
+import { User as FirebaseUser, GoogleAuthProvider, signInWithPopup, signOut } from 'firebase/auth';
+import { auth } from '@/lib/firebase';
 import { User } from '@/types';
+import Cookies from 'js-cookie';
+import axios from 'axios';
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 interface AuthContextType {
   user: User | null;
   loading: boolean;
+  login: () => Promise<void>;
   logout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const { data: session, status } = useSession();
   const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
   const router = useRouter();
 
-  useEffect(() => {
-    if (status === 'authenticated' && session?.user) {
-      const userData = {
-        id: session.user.id as string,
-        name: session.user.name as string,
-        email: session.user.email as string,
-      };
-      setUser(userData);
-      if (session.user.accessToken) {
-        localStorage.setItem('accessToken', session.user.accessToken);
+  // Function to get and set the Firebase ID token
+  const updateToken = async (firebaseUser: FirebaseUser) => {
+    try {
+      // Get Firebase token
+      const firebaseToken = await firebaseUser.getIdToken();
+      console.log('Firebase Token:', firebaseToken); // Log Firebase token
+      
+      // Send Firebase token to backend to get our custom JWT
+      const response = await axios.post(`${API_URL}/auth/firebase-login`, {
+        token: firebaseToken
+      });
+
+      console.log('Backend Login Response:', response.data); // Log backend response
+      const { access_token } = response.data;
+      
+      // Set our custom JWT in cookies
+      Cookies.set('token', access_token, { expires: 7 }); // Token expires in 7 days
+      console.log('Token set in cookies:', access_token); // Confirm token is set
+    } catch (error) {
+      console.error('Error getting backend token:', error);
+      // Optionally, add more detailed error handling
+      if (axios.isAxiosError(error)) {
+        console.error('Axios Error Details:', {
+          response: error.response?.data,
+          status: error.response?.status,
+          headers: error.response?.headers
+        });
       }
-    } else if (status === 'unauthenticated') {
-      setUser(null);
-      localStorage.removeItem('accessToken');
     }
-  }, [session, status]);
+  };
+
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged(async (firebaseUser) => {
+      if (firebaseUser) {
+        // Get and set the token
+        await updateToken(firebaseUser);
+        
+        const userData: User = {
+          id: firebaseUser.uid,
+          name: firebaseUser.displayName || '',
+          email: firebaseUser.email || '',
+          image: firebaseUser.photoURL || '',
+        };
+        setUser(userData);
+      } else {
+        setUser(null);
+        Cookies.remove('token');
+      }
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  const login = async () => {
+    try {
+      const provider = new GoogleAuthProvider();
+      const result = await signInWithPopup(auth, provider);
+      if (result.user) {
+        await updateToken(result.user);
+      }
+      router.push('/dashboard');
+    } catch (error: any) {
+      console.error('Login error:', error);
+      throw error;
+    }
+  };
+
+  const logout = async () => {
+    try {
+      await signOut(auth);
+      Cookies.remove('token');
+      router.push('/login');
+    } catch (error: any) {
+      console.error('Logout error:', error);
+      throw error;
+    }
+  };
 
   const value = {
     user,
-    loading: status === 'loading',
-    logout: async () => {
-      await signOut();
-      setUser(null);
-      localStorage.removeItem('accessToken');
-    }
+    loading,
+    login,
+    logout
   };
 
   return (

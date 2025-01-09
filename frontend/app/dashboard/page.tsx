@@ -206,8 +206,8 @@ export default function DashboardPage() {
           { 
             icon: Clock, 
             title: 'Study Time', 
-            value: '30 hrs', 
-            description: 'This week' 
+            value: `${Math.round((stats?.totalStudyTime || 0) / 60)} hrs`, 
+            description: 'Total time' 
           },
           { 
             icon: BarChart2, 
@@ -311,7 +311,7 @@ export default function DashboardPage() {
           <DashboardAnalytics 
             stats={{
               completedTasks: stats?.completed || 0,
-              totalStudyTime: 1800,
+              totalStudyTime: stats?.totalStudyTime || 30,
               streak: 7,
               progress: (stats?.completed || 0) / (stats?.total || 1) * 100,
             }} 
