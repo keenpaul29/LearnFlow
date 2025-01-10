@@ -5,7 +5,11 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 // Enhanced logging for token and request details
 axios.interceptors.request.use((config) => {
-  const token = Cookies.get('token');
+  // Try to get token from multiple sources
+  const tokenFromCookies = Cookies.get('token');
+  const tokenFromLocalStorage = localStorage.getItem('token');
+  const token = tokenFromCookies || tokenFromLocalStorage;
+
   console.group('Axios Request Interceptor');
   console.log('API URL:', API_URL);
   console.log('Full Request Config:', {
@@ -13,13 +17,14 @@ axios.interceptors.request.use((config) => {
     url: config.url,
     headers: config.headers
   });
-  console.log('Token from cookies:', token); 
+  console.log('Token source:', tokenFromCookies ? 'Cookies' : (tokenFromLocalStorage ? 'LocalStorage' : 'None')); 
   
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
     console.log('Authorization Header:', config.headers.Authorization);
   } else {
     console.warn('No authentication token found!');
+    // Optionally, redirect to login or handle unauthenticated state
   }
   
   console.groupEnd();

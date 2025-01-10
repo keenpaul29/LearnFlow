@@ -39,11 +39,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.log('Backend Login Response:', response.data); // Log backend response
       const { access_token } = response.data;
       
-      // Set our custom JWT in cookies
+      // Set our custom JWT in cookies and localStorage for redundancy
       Cookies.set('token', access_token, { expires: 7 }); // Token expires in 7 days
-      console.log('Token set in cookies:', access_token); // Confirm token is set
+      localStorage.setItem('token', access_token);
+      console.log('Token set in cookies and localStorage:', access_token);
+
+      // Set the token in axios default headers
+      axios.defaults.headers.common['Authorization'] = `Bearer ${access_token}`;
     } catch (error) {
       console.error('Error getting backend token:', error);
+      // Clear any existing tokens if login fails
+      Cookies.remove('token');
+      localStorage.removeItem('token');
+      delete axios.defaults.headers.common['Authorization'];
+
       // Optionally, add more detailed error handling
       if (axios.isAxiosError(error)) {
         console.error('Axios Error Details:', {
@@ -52,6 +61,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           headers: error.response?.headers
         });
       }
+      throw error; // Rethrow to allow caller to handle
     }
   };
 
@@ -71,6 +81,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } else {
         setUser(null);
         Cookies.remove('token');
+        localStorage.removeItem('token');
+        delete axios.defaults.headers.common['Authorization'];
       }
       setLoading(false);
     });
@@ -96,6 +108,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       await signOut(auth);
       Cookies.remove('token');
+      localStorage.removeItem('token');
+      delete axios.defaults.headers.common['Authorization'];
       router.push('/login');
     } catch (error: any) {
       console.error('Logout error:', error);
